@@ -1,0 +1,6 @@
+asyncpg
+gunicorn
+quart
+uvloop
+protobuf
+psycopg2
