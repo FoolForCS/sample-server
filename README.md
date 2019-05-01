@@ -1,6 +1,11 @@
 # Backend/DevOps Engineer @ xbird challenge
 The app/ contains all the source code.
+To run the code you need a postgres server to be setup first. This postgres server should contain the tables 'location', 'activity' and 'sample'. It should have write privelages to a user 'newuser' who will use 'password' to authenticate. These things are currently hard-coded in the system. I'm working on making it generic and deployable but I wanted to update on the progress about the completion of the business logic in the code.
 
+'source app/activate' to activate the virtual area.
+python3 run.py to run the server.
+
+Note that this is not how it'll be deployed in production. We will probably need to layer it on top of gunicorn as well.
 ## Design considerations
 - I've used quart for the backend server. It uses asyncio over flask and is easy to prototype. It needs to be used with a gunicorn like solution in production.
 - I've encoded protobufs as a stream of messages whose size is detailed by an integer prefixing each message. This allows me to represent a long sequence of protcol buffer messages easily. The reason I had to do this on my own was because protocol buffers do not provide any out of the box method for streaming.
