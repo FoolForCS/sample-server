@@ -1,40 +1,29 @@
 # Backend/DevOps Engineer @ xbird challenge
+The app/ contains all the source code.
 
-Thank you for applying at xbird! We think you are a very promising candidate and would like to move on with the following challenge. Build a system that accepts sample uploads and writes each sample to a database. Deploy the system to a container solution.
+## Design considerations
+- I've used quart for the backend server. It uses asyncio over flask and is easy to prototype. It needs to be used with a gunicorn like solution in production.
+- I've encoded protobufs as a stream of messages whose size is detailed by an integer prefixing each message. This allows me to represent a long sequence of protcol buffer messages easily. The reason I had to do this on my own was because protocol buffers do not provide any out of the box method for streaming.
+- I've not implemented error handling very well due to a time crunch - I've noted that this could be improved to point to the specific error. Given time, I can make this better as well.
 
-## Specification
+## Database choice
+- I've used Postgresql for storing the data. The reason for this choice is because we wish to do some aggregations/filtering on the data. These kind of operations are usually faster on a relational database. It also has good support for python.
+- I've aggregated the request and made bulk inserts into tables. If the size of the request would get really large, I'd need to split up the request data and then do bulk inserts. We can potentially do some error handling as well on the data to avoid failures in bulk inserts. Those things have not been considered yet.
+- There are three tables in the postgres db - one for each type of data: (activity, location, acceleration). I set these up before hand with 'newuser' and 'password' as password.
 
-- Write a REST API server that accepts HTTP POST requests containing valid `Sample`[ protocol buffer messages](https://developers.google.com/protocol-buffers/). It must write the samples to a database of your choice. When choosing a database and defining your schema (or none), keep in mind that you might want to filter samples using attributes of their data.
-    - If the upload body is invalid or writing to the database fails, the endpoint should respond with an error.
-    - If the upload succeeds, the endpoint's response should indicate that along with a number of processed objects on the current request.
-- Write a client script that reads the json source files, creates the equivalent `Sample` protocol buffer objects and sends them to the server. Think about how to represent a collection of samples in the upload body.
-- Ensure your system can be deployed as multi-container application, preferably using [Kubernetes](https://kubernetes.io), alternatively using[ Docker Compose](https://docs.docker.com/compose/overview/). You might actually deploy it, for example, to [Google Cloud Platform](https://cloud.google.com) using the [Free Trial](https://cloud.google.com/free-trial/).
+## If the number of samples become really big
+- I'd probably partition the system and have multiple instances of the servers.
+- In addition, I'll try to parallelize as much of the code as possible. For instance, while I'm still reading protobuf messages, I could start writing a chunk of protobufs that I've already got onto the database. Given the amount of time, I've not optimized the code to support these kind of things just yet, but they could surely be added.
 
-We think there is enough time to complete the all the tasks, in case there is not, they are sorted according to our preferences.
-
-Please document your results along with the answers to the *Questions* section. Then email us back either a zip file or a GitHub link.
-
-## Attachments
-
-- `sample.proto` contains the relevant protocol buffer definitions.
-- `activity.json` contains four weeks of activity data, one per line.
-- `location.json` contains four weeks of location data, one per line.
-- Acceleration samples are intentionally not provided.
-
-## Questions
-
-- Explain your database choice
-- How would you modify the system if the number of samples becomes really big?
-- How would you monitor the running services?
-
+## Monitoring
+- I believe setting up lots of metrics and telemetries to allow for easy monitoring of the system. Example metrics would be: response times of the server, size of the protobuf messages being sent to the server, number of database transactions being made, time taken for each transaction, number of pending requests at a time, etc.
+- In addition to these metrics, one could then set up thresholds on sane values and setup alerting whenever those thresholds are violated.
 
 ## Bonus questions
+1.      longitude     |     latitude     | c
+------------------+------------------+---
+ 13.4034529455246 | 52.5476395228265 | 9
+ 13.3987157382968 | 52.5462835873742 | 8
+ 13.4032220930736 | 52.5476969210846 | 7
 
-If you would like a chance to play around with the data you can also give these questions a go:
-
-- Location data represents significant location changes:
-    > The significant-change location service delivers updates only when there has been a significant change in the device’s location, such as 500 meters or more.
-    Based on the location samples supplied, what are the three places where the user spends most of their time?
-    
-- Given the most common places for the user, identify what kind of location they represent for the user. You can use any additional data sources (provided or not) to find the answer.
->>>>>>> initial commit
+ This was using the query - postgres=> select longitude, latitude, count(*) as c from location group by latitude, longitude order by c desc;
