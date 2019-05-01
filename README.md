@@ -20,8 +20,8 @@ The app/ contains all the source code.
 - In addition to these metrics, one could then set up thresholds on sane values and setup alerting whenever those thresholds are violated.
 
 ## Bonus questions
-1.      longitude     |     latitude     | c
-------------------+------------------+---
+1. longitude | latitude | count
+--- | --- | --- |
  13.4034529455246 | 52.5476395228265 | 9
  13.3987157382968 | 52.5462835873742 | 8
  13.4032220930736 | 52.5476969210846 | 7
